@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Algorithm Sorter | Phase 1</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
@@ -18,9 +18,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100dvh; /* Dynamic viewport height for mobile */
             margin: 0;
-            overflow: hidden;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .container {
@@ -28,29 +29,35 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(0, 240, 255, 0.2);
             border-radius: 20px;
-            padding: 40px;
-            width: 90%;
+            padding: 30px 20px;
+            width: 100%;
             max-width: 400px;
             text-align: center;
             box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(0, 240, 255, 0.1);
+            box-sizing: border-box;
         }
 
         h1 {
             font-family: 'Montserrat', sans-serif;
-            font-size: 32px;
+            font-size: clamp(24px, 6vw, 32px);
             text-transform: uppercase;
-            letter-spacing: 4px;
-            margin-bottom: 30px;
+            letter-spacing: 3px;
+            margin-bottom: 25px;
             background: linear-gradient(90deg, #00f0ff, #bd00ff);
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        .name-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
         input, select {
             width: 100%;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 14px;
             background: rgba(0,0,0,0.5);
             border: 2px solid rgba(255,255,255,0.1);
             border-radius: 10px;
@@ -60,15 +67,25 @@
             box-sizing: border-box;
             outline: none;
             transition: border 0.3s;
+            appearance: none; /* Removes default iOS styling */
         }
 
         input:focus, select:focus {
             border-color: #00f0ff;
         }
 
+        /* Adjust margin for inputs inside the flex row */
+        .name-row input {
+            margin-bottom: 0; 
+        }
+
+        select {
+            margin-bottom: 20px;
+        }
+
         button {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: linear-gradient(90deg, #00f0ff, #bd00ff);
             border: none;
             border-radius: 10px;
@@ -101,11 +118,12 @@
 
         .team-number {
             font-family: 'Montserrat', sans-serif;
-            font-size: 100px;
+            font-size: clamp(80px, 20vw, 120px);
             font-weight: 900;
-            margin: 20px 0;
+            margin: 10px 0;
             color: #00f0ff;
             text-shadow: 0 0 30px #00f0ff;
+            line-height: 1;
         }
 
         .loader {
@@ -128,7 +146,10 @@
         <h1>Initialization</h1>
         <div class="loader" id="loader"></div>
         <form id="sortForm">
-            <input type="text" id="playerName" placeholder="Enter First & Last Name" required>
+            <div class="name-row">
+                <input type="text" id="firstName" placeholder="First Name" required>
+                <input type="text" id="lastName" placeholder="Last Name" required>
+            </div>
             <select id="playerGender" required>
                 <option value="" disabled selected>Select Gender</option>
                 <option value="Male">Male</option>
@@ -140,13 +161,12 @@
 
     <div class="container" id="success-screen">
         <h3>Network Assigned</h3>
-        <p id="welcome-name" style="font-size: 20px; color: #cbd5e1;"></p>
+        <p id="welcome-name" style="font-size: 18px; color: #cbd5e1; margin-top: 5px;"></p>
         <div class="team-number" id="assigned-team">--</div>
         <button type="button" class="outline-btn" id="resetBtn">Sort Next Player</button>
     </div>
 
     <script>
-        // Use 'var' to prevent double-declaration syntax errors if scripts execute oddly
         var SUPABASE_URL = 'https://jzwwplkfaiitejplvzcz.supabase.co';
         var SUPABASE_ANON_KEY = 'sb_publishable_W6eOU0wUmI4QwQS1cOGxcQ_159dRwQl';
         var dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -163,7 +183,10 @@
             submitBtn.style.display = 'none';
             loader.style.display = 'block';
 
-            var name = document.getElementById('playerName').value;
+            // Grab inputs and concatenate name
+            var fName = document.getElementById('firstName').value.trim();
+            var lName = document.getElementById('lastName').value.trim();
+            var fullName = fName + " " + lName;
             var gender = document.getElementById('playerGender').value;
 
             try {
@@ -192,22 +215,22 @@
                 let randomChoice = availableTeams[Math.floor(Math.random() * availableTeams.length)];
                 let assignedTeamNumber = parseInt(randomChoice);
 
-                // Insert into Database
+                // Insert into Database using the concatenated fullName
                 const { error: insertError } = await dbClient
                     .from('players')
-                    .insert([{ name: name, gender: gender, team_number: assignedTeamNumber }]);
+                    .insert([{ name: fullName, gender: gender, team_number: assignedTeamNumber }]);
 
                 if (insertError) throw insertError;
 
                 // UI Swap to Success
                 document.getElementById('form-screen').style.display = 'none';
                 document.getElementById('success-screen').style.display = 'block';
-                document.getElementById('welcome-name').innerText = `Welcome, ${name}.`;
+                document.getElementById('welcome-name').innerText = `Welcome, ${fName}.`; // First name only for the UI
                 document.getElementById('assigned-team').innerText = assignedTeamNumber;
 
             } catch (err) {
                 console.error("Error sorting player:", err);
-                alert("Algorithm Error. Please check the Developer Console.");
+                alert("Algorithm Error. Please check your connection and try again.");
                 submitBtn.style.display = 'block';
                 loader.style.display = 'none';
             }
