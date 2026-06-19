@@ -136,6 +136,57 @@
         }
 
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* THEMED ERROR MODAL */
+        #error-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(3, 7, 18, 0.9);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .error-box {
+            background: rgba(17, 24, 39, 1);
+            border: 2px solid #ff2a5f;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(255, 42, 95, 0.3);
+            max-width: 350px;
+            width: 100%;
+        }
+
+        .error-box h3 {
+            color: #ff2a5f;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 0;
+            text-shadow: 0 0 10px rgba(255, 42, 95, 0.5);
+        }
+
+        .error-box p {
+            color: #e2e8f0;
+            font-size: 16px;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 2px solid #ff2a5f;
+            color: #ff2a5f;
+            box-shadow: none;
+        }
+
+        .btn-danger:active {
+            background: rgba(255, 42, 95, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -164,6 +215,14 @@
         <button type="button" class="outline-btn" id="resetBtn">Sort Next Player</button>
     </div>
 
+    <div id="error-modal">
+        <div class="error-box">
+            <h3>Access Denied</h3>
+            <p id="error-message">A player with this name has already been assigned to a network.</p>
+            <button type="button" class="btn-danger" id="closeErrorBtn">Acknowledge</button>
+        </div>
+    </div>
+
     <script>
         var SUPABASE_URL = 'https://jzwwplkfaiitejplvzcz.supabase.co';
         var SUPABASE_ANON_KEY = 'sb_publishable_W6eOU0wUmI4QwQS1cOGxcQ_159dRwQl';
@@ -173,6 +232,22 @@
         var loader = document.getElementById('loader');
         var submitBtn = document.getElementById('submitBtn');
         var resetBtn = document.getElementById('resetBtn');
+        var errorModal = document.getElementById('error-modal');
+        var errorMessage = document.getElementById('error-message');
+        var closeErrorBtn = document.getElementById('closeErrorBtn');
+
+        // Function to trigger the custom error modal
+        function showError(message) {
+            errorMessage.innerText = message;
+            errorModal.style.display = 'flex';
+            submitBtn.style.display = 'block';
+            loader.style.display = 'none';
+        }
+
+        // Close the error modal
+        closeErrorBtn.addEventListener('click', () => {
+            errorModal.style.display = 'none';
+        });
 
         // Handle the Form Submission
         form.addEventListener('submit', async (e) => {
@@ -181,27 +256,24 @@
             submitBtn.style.display = 'none';
             loader.style.display = 'block';
 
-            // Grab inputs and concatenate name
             var fName = document.getElementById('firstName').value.trim();
             var lName = document.getElementById('lastName').value.trim();
             var fullName = fName + " " + lName;
             var gender = document.getElementById('playerGender').value;
 
             try {
-                // 1. DUPLICATE CHECK: Does this name already exist?
+                // 1. DUPLICATE CHECK
                 const { data: existingPlayer, error: checkError } = await dbClient
                     .from('players')
                     .select('name')
-                    .ilike('name', fullName) // ilike makes it case-insensitive
+                    .ilike('name', fullName) 
                     .limit(1);
 
                 if (checkError) throw checkError;
 
                 if (existingPlayer && existingPlayer.length > 0) {
-                    alert("A player with this name has already been assigned to a network.");
-                    submitBtn.style.display = 'block';
-                    loader.style.display = 'none';
-                    return; // Stop the function here so they don't get added twice
+                    showError("A player with this name has already been assigned to a network. Duplicate entries are blocked.");
+                    return; 
                 }
 
                 // 2. Fetch current distribution
@@ -229,7 +301,7 @@
                 let randomChoice = availableTeams[Math.floor(Math.random() * availableTeams.length)];
                 let assignedTeamNumber = parseInt(randomChoice);
 
-                // Insert into Database using the concatenated fullName
+                // Insert into Database
                 const { error: insertError } = await dbClient
                     .from('players')
                     .insert([{ name: fullName, gender: gender, team_number: assignedTeamNumber }]);
@@ -244,9 +316,7 @@
 
             } catch (err) {
                 console.error("Error sorting player:", err);
-                alert("Algorithm Error. Please check your connection and try again.");
-                submitBtn.style.display = 'block';
-                loader.style.display = 'none';
+                showError("Algorithm connection error. Please verify network status and try again.");
             }
         });
 
