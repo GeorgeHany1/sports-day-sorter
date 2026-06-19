@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Local QR Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f0f0f0; }
+        #qrcode { margin-top: 20px; display: flex; justify-content: center; }
+        canvas, img { border: 10px solid white; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <h2>Your Local QR Generator</h2>
+    <p>Generating code for: <br> <strong>https://georgehany1.github.io/sports-day-sorter/</strong></p>
+    <div id="qrcode"></div>
+    <p>Right-click the image above and select <b>"Save Image As..."</b> to save your QR code!</p>
+
+    <script>
+        new QRCode(document.getElementById("qrcode"), {
+            text: "https://georgehany1.github.io/sports-day-sorter/",
+            width: 300,
+            height: 300,
+            colorDark : "#030712",
+            colorLight : "#ffffff",
+            correctLevel : QRCode.CorrectLevel.H
+        });
+    </script>
+</body>
+</html
