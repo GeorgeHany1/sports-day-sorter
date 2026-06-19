@@ -86,6 +86,14 @@
             transform: scale(0.95);
         }
 
+        .outline-btn {
+            background: transparent;
+            border: 2px solid #00f0ff;
+            color: #00f0ff;
+            margin-top: 30px;
+            box-shadow: none;
+        }
+
         /* Success Screen Styling */
         #success-screen {
             display: none;
@@ -134,47 +142,42 @@
         <h3>Network Assigned</h3>
         <p id="welcome-name" style="font-size: 20px; color: #cbd5e1;"></p>
         <div class="team-number" id="assigned-team">--</div>
-        <p style="color: #bd00ff; font-weight: bold; margin-top: 20px;">Proceed to Phase 1.</p>
+        <button type="button" class="outline-btn" id="resetBtn">Sort Next Player</button>
     </div>
 
     <script>
-        // ==========================================
-        // 1. SUPABASE CREDENTIALS INJECTED
-        // ==========================================
-        const SUPABASE_URL = 'https://jzwwplkfaiitejplvzcz.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_W6eOU0wUmI4QwQS1cOGxcQ_159dRwQl';
-        
-        // Initialize Supabase Client
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Use 'var' to prevent double-declaration syntax errors if scripts execute oddly
+        var SUPABASE_URL = 'https://jzwwplkfaiitejplvzcz.supabase.co';
+        var SUPABASE_ANON_KEY = 'sb_publishable_W6eOU0wUmI4QwQS1cOGxcQ_159dRwQl';
+        var dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const form = document.getElementById('sortForm');
-        const loader = document.getElementById('loader');
-        const submitBtn = document.getElementById('submitBtn');
+        var form = document.getElementById('sortForm');
+        var loader = document.getElementById('loader');
+        var submitBtn = document.getElementById('submitBtn');
+        var resetBtn = document.getElementById('resetBtn');
 
+        // Handle the Form Submission
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // UI Feedback
             submitBtn.style.display = 'none';
             loader.style.display = 'block';
 
-            const name = document.getElementById('playerName').value;
-            const gender = document.getElementById('playerGender').value;
+            var name = document.getElementById('playerName').value;
+            var gender = document.getElementById('playerGender').value;
 
             try {
-                // 1. Fetch current distribution for this gender
-                const { data, error } = await supabase
+                // Fetch current distribution
+                const { data, error } = await dbClient
                     .from('players')
                     .select('team_number')
                     .eq('gender', gender);
 
                 if (error) throw error;
 
-                // 2. Count how many of this gender are in each of the 12 teams
-                // Start by assuming all 12 teams have 0 of this gender
+                // Count teams
                 let teamCounts = { 1:0, 2:0, 3:0, 4:0, 5:0, 6:0, 7:0, 8:0, 9:0, 10:0, 11:0, 12:0 };
                 
-                // Add the actual counts from the database
                 if (data) {
                     data.forEach(row => {
                         if (teamCounts[row.team_number] !== undefined) {
@@ -183,24 +186,20 @@
                     });
                 }
 
-                // 3. Find the lowest number of players on any team
+                // Math to find the lowest team
                 let minCount = Math.min(...Object.values(teamCounts));
-
-                // 4. Find all teams that have this lowest count (The tie-breakers)
                 let availableTeams = Object.keys(teamCounts).filter(team => teamCounts[team] === minCount);
-
-                // 5. Randomly pick one of the tied teams
                 let randomChoice = availableTeams[Math.floor(Math.random() * availableTeams.length)];
                 let assignedTeamNumber = parseInt(randomChoice);
 
-                // 6. Insert the player into the database to claim their spot
-                const { error: insertError } = await supabase
+                // Insert into Database
+                const { error: insertError } = await dbClient
                     .from('players')
                     .insert([{ name: name, gender: gender, team_number: assignedTeamNumber }]);
 
                 if (insertError) throw insertError;
 
-                // 7. Show the beautiful Success Screen
+                // UI Swap to Success
                 document.getElementById('form-screen').style.display = 'none';
                 document.getElementById('success-screen').style.display = 'block';
                 document.getElementById('welcome-name').innerText = `Welcome, ${name}.`;
@@ -208,10 +207,19 @@
 
             } catch (err) {
                 console.error("Error sorting player:", err);
-                alert("Algorithm Error. Please check your connection and try again.");
+                alert("Algorithm Error. Please check the Developer Console.");
                 submitBtn.style.display = 'block';
                 loader.style.display = 'none';
             }
+        });
+
+        // Handle the Reset Button
+        resetBtn.addEventListener('click', () => {
+            document.getElementById('success-screen').style.display = 'none';
+            document.getElementById('form-screen').style.display = 'block';
+            form.reset();
+            submitBtn.style.display = 'block';
+            loader.style.display = 'none';
         });
     </script>
 </body>
