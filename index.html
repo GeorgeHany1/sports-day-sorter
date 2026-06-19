@@ -18,7 +18,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100dvh; /* Dynamic viewport height for mobile */
+            min-height: 100dvh; 
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
@@ -67,14 +67,13 @@
             box-sizing: border-box;
             outline: none;
             transition: border 0.3s;
-            appearance: none; /* Removes default iOS styling */
+            appearance: none; 
         }
 
         input:focus, select:focus {
             border-color: #00f0ff;
         }
 
-        /* Adjust margin for inputs inside the flex row */
         .name-row input {
             margin-bottom: 0; 
         }
@@ -111,7 +110,6 @@
             box-shadow: none;
         }
 
-        /* Success Screen Styling */
         #success-screen {
             display: none;
         }
@@ -190,7 +188,23 @@
             var gender = document.getElementById('playerGender').value;
 
             try {
-                // Fetch current distribution
+                // 1. DUPLICATE CHECK: Does this name already exist?
+                const { data: existingPlayer, error: checkError } = await dbClient
+                    .from('players')
+                    .select('name')
+                    .ilike('name', fullName) // ilike makes it case-insensitive
+                    .limit(1);
+
+                if (checkError) throw checkError;
+
+                if (existingPlayer && existingPlayer.length > 0) {
+                    alert("A player with this name has already been assigned to a network.");
+                    submitBtn.style.display = 'block';
+                    loader.style.display = 'none';
+                    return; // Stop the function here so they don't get added twice
+                }
+
+                // 2. Fetch current distribution
                 const { data, error } = await dbClient
                     .from('players')
                     .select('team_number')
@@ -225,7 +239,7 @@
                 // UI Swap to Success
                 document.getElementById('form-screen').style.display = 'none';
                 document.getElementById('success-screen').style.display = 'block';
-                document.getElementById('welcome-name').innerText = `Welcome, ${fName}.`; // First name only for the UI
+                document.getElementById('welcome-name').innerText = `Welcome, ${fName}.`; 
                 document.getElementById('assigned-team').innerText = assignedTeamNumber;
 
             } catch (err) {
