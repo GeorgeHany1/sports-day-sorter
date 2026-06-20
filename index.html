@@ -114,14 +114,15 @@
             display: none;
         }
 
-        .team-number {
+        .thank-you-text {
             font-family: 'Montserrat', sans-serif;
-            font-size: clamp(80px, 20vw, 120px);
+            font-size: clamp(40px, 12vw, 60px);
             font-weight: 900;
-            margin: 10px 0;
+            margin: 20px 0;
             color: #00f0ff;
             text-shadow: 0 0 30px #00f0ff;
-            line-height: 1;
+            line-height: 1.2;
+            text-transform: uppercase;
         }
 
         .loader {
@@ -209,9 +210,9 @@
     </div>
 
     <div class="container" id="success-screen">
-        <h3>Network Assigned</h3>
-        <p id="welcome-name" style="font-size: 18px; color: #cbd5e1; margin-top: 5px;"></p>
-        <div class="team-number" id="assigned-team">--</div>
+        <h3 style="color: #e2e8f0; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Registration Complete</h3>
+        <div class="thank-you-text">Thank You</div>
+        <p id="welcome-name" style="font-size: 16px; color: #cbd5e1; margin-top: 5px;"></p>
         <button type="button" class="outline-btn" id="resetBtn">Sort Next Player</button>
     </div>
 
@@ -308,11 +309,10 @@
 
                 if (insertError) throw insertError;
 
-                // UI Swap to Success
+                // UI Swap to Success (Secretly hiding the team number!)
                 document.getElementById('form-screen').style.display = 'none';
                 document.getElementById('success-screen').style.display = 'block';
-                document.getElementById('welcome-name').innerText = `Welcome, ${fName}.`; 
-                document.getElementById('assigned-team').innerText = assignedTeamNumber;
+                document.getElementById('welcome-name').innerText = `You have been added to the system, ${fName}.`; 
 
             } catch (err) {
                 console.error("Error sorting player:", err);
