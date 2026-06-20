@@ -102,14 +102,6 @@
             transform: scale(0.95);
         }
 
-        .outline-btn {
-            background: transparent;
-            border: 2px solid #00f0ff;
-            color: #00f0ff;
-            margin-top: 30px;
-            box-shadow: none;
-        }
-
         #success-screen {
             display: none;
         }
@@ -213,7 +205,7 @@
         <h3 style="color: #e2e8f0; font-family: 'Montserrat', sans-serif; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px;">Registration Complete</h3>
         <div class="thank-you-text">Thank You</div>
         <p id="welcome-name" style="font-size: 16px; color: #cbd5e1; margin-top: 5px;"></p>
-        </div>
+    </div>
 
     <div id="error-modal">
         <div class="error-box">
@@ -224,6 +216,14 @@
     </div>
 
     <script>
+        // --- 1. DEVICE LOCK CHECK (Runs immediately when the page loads) ---
+        // If their browser remembers them, hide the form instantly.
+        if (localStorage.getItem('sportsDayRegistered') === 'true') {
+            document.getElementById('form-screen').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'block';
+            document.getElementById('welcome-name').innerText = "Device already registered to a network.";
+        }
+
         var SUPABASE_URL = 'https://jzwwplkfaiitejplvzcz.supabase.co';
         var SUPABASE_ANON_KEY = 'sb_publishable_W6eOU0wUmI4QwQS1cOGxcQ_159dRwQl';
         var dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -231,7 +231,6 @@
         var form = document.getElementById('sortForm');
         var loader = document.getElementById('loader');
         var submitBtn = document.getElementById('submitBtn');
-        var resetBtn = document.getElementById('resetBtn');
         var errorModal = document.getElementById('error-modal');
         var errorMessage = document.getElementById('error-message');
         var closeErrorBtn = document.getElementById('closeErrorBtn');
@@ -262,7 +261,7 @@
             var gender = document.getElementById('playerGender').value;
 
             try {
-                // 1. DUPLICATE CHECK
+                // DUPLICATE CHECK
                 const { data: existingPlayer, error: checkError } = await dbClient
                     .from('players')
                     .select('name')
@@ -276,7 +275,7 @@
                     return; 
                 }
 
-                // 2. Fetch current distribution
+                // Fetch current distribution
                 const { data, error } = await dbClient
                     .from('players')
                     .select('team_number')
@@ -308,7 +307,11 @@
 
                 if (insertError) throw insertError;
 
-                // UI Swap to Success (Secretly hiding the team number!)
+                // --- 2. SET DEVICE LOCK ---
+                // Tell the browser to permanently remember that this phone has registered
+                localStorage.setItem('sportsDayRegistered', 'true');
+
+                // UI Swap to Success 
                 document.getElementById('form-screen').style.display = 'none';
                 document.getElementById('success-screen').style.display = 'block';
                 document.getElementById('welcome-name').innerText = `You have been added to the system, ${fName}.`; 
@@ -317,15 +320,6 @@
                 console.error("Error sorting player:", err);
                 showError("Algorithm connection error. Please verify network status and try again.");
             }
-        });
-
-        // Handle the Reset Button
-        resetBtn.addEventListener('click', () => {
-            document.getElementById('success-screen').style.display = 'none';
-            document.getElementById('form-screen').style.display = 'block';
-            form.reset();
-            submitBtn.style.display = 'block';
-            loader.style.display = 'none';
         });
     </script>
 </body>
